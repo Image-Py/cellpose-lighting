@@ -81,7 +81,7 @@ def labels_to_flows(labels, files=None):
         labels = [labels[n][np.newaxis,:,:] for n in range(nimg)]
 
     if labels[0].shape[0] == 1 or labels[0].ndim < 3:
-        print('NOTE: computing flows for labels (could be done before to save time)')
+        # print('NOTE: computing flows for labels (could be done before to save time)')
         # compute flows        
         veci = [masks_to_flows(labels[n][0])[0] for n in range(nimg)]
         # concatenate flows with cell probability

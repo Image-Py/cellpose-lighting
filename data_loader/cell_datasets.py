@@ -32,17 +32,23 @@ class CellDataset(Dataset):
             # self.check_dataset(checked_id_file)
 
     def __getitem__(self, i):
-        # image
         img_id = self.ids[i]
-        image = self.get_image(img_id)
-        # label
-        target = self.get_target(img_id) if self.train else {}
-        # data augment
-        image, target = self.transform(image, target)
-        # to tensor
-        image = T.ToTensor()(image)
-        target = T.ToTensor()(target)
-        return image, target
+        while True:
+            # image
+            image = self.get_image(img_id)
+            # label
+            target = self.get_target(img_id) if self.train else {}
+            # check data
+            if target is None:
+                img_id = np.random.choice(self.ids)
+                continue
+            else:
+                # data augment
+                image, target = self.transform(image, target)
+                # to tensor
+                image = torch.from_numpy(image)
+                target = torch.from_numpy(target)
+                return image, target
 
     def __len__(self):
         return len(self.ids)
@@ -64,6 +70,8 @@ class CellDataset(Dataset):
         return new_box # new_box format: (xmin, ymin, xmax, ymax)
 
     def get_target(self, img_id):
+        # return target.shape: [4, Ly, Lx]
+        # target[0] is masks, target[1] is cell_probability, target[2] is flow Y, target[3] is flow X.
         img_id = int(img_id)
         ann_ids = self.coco.getAnnIds(img_id)
         anns = self.coco.loadAnns(ann_ids)

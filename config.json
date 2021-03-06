@@ -1,19 +1,26 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "Cellpose Net",
     "n_gpu": 1,
 
     "arch": {
-        "type": "MnistModel",
-        "args": {}
+        "type": "CellPosenet",
+        "args": {
+            "nbase": [2, 32, 64, 128, 256],
+            "nout": 3,
+            "sz": 3,
+            "residual_on": true,
+            "style_on": true,
+            "concatenation": false
+        }
     },
     "data_loader": {
-        "type": "MnistDataLoader",
+        "type": "CellDataLoader",
         "args":{
-            "data_dir": "data/",
-            "batch_size": 128,
+            "data_dir": "/home/lizhogn/Documents/Data/coco/",
+            "batch_size": 1,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 1
         }
     },
     "optimizer": {
@@ -24,9 +31,9 @@
             "amsgrad": true
         }
     },
-    "loss": "nll_loss",
+    "loss": "loss_fn",
     "metrics": [
-        "accuracy", "top_k_acc"
+        "iou_custom"
     ],
     "lr_scheduler": {
         "type": "StepLR",
