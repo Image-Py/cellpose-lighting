@@ -94,7 +94,7 @@ class Trainer(BaseTrainer):
                     self.valid_metrics.update(met.__name__, met(output, target))
                 self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
-        # add histogram of model parameters to the tensorboard
+        # add histogram of models parameters to the tensorboard
         for name, p in self.model.named_parameters():
             self.writer.add_histogram(name, p, bins='auto')
         return self.valid_metrics.result()

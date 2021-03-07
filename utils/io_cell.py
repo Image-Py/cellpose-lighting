@@ -134,7 +134,7 @@ def load_train_test_data(train_dir, test_dir=None, image_filter=None, mask_filte
 
 
 def masks_flows_to_seg(images, masks, flows, diams, file_names, channels=None):
-    """ save output of model eval to be loaded in GUI 
+    """ save output of models eval to be loaded in GUI
 
     can be list output (run on multiple images) or single output (run on single image)
 

@@ -57,7 +57,7 @@ def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
     return T
 
 def labels_to_flows(labels, files=None):
-    """ convert labels (list of masks or flows) to flows for training model 
+    """ convert labels (list of masks or flows) to flows for training models
 
     if files is not None, flows are saved to files to be reused
 

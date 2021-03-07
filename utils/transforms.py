@@ -402,7 +402,14 @@ def pad_image_ND(img0, div=16, extra = 1):
     Ly, Lx = img0.shape[-2:]
     ysub = np.arange(xpad1, xpad1+Ly)
     xsub = np.arange(ypad1, ypad1+Lx)
-    return I, ysub, xsub
+
+    # slices from padding
+    slc = [slice(0, I.shape[n] + 1) for n in range(I.ndim)]
+    slc[-2] = slice(ysub[0], ysub[-1] + 1)
+    slc[-1] = slice(xsub[0], xsub[-1] + 1)
+    slc = tuple(slc)
+
+    return I, slc
 
 def random_rotate_and_resize(X, Y=None, scale_range=1., xy = (224,224), 
                              do_flip=True, rescale=None, unet=False):

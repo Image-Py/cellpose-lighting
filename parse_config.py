@@ -22,7 +22,7 @@ class ConfigParser:
         self._config = _update_config(config, modification)
         self.resume = resume
 
-        # set save_dir where trained model and log will be saved.
+        # set save_dir where trained models and log will be saved.
         save_dir = Path(self.config['trainer']['save_dir'])
 
         exper_name = self.config['name']
@@ -73,6 +73,7 @@ class ConfigParser:
             # update new config for fine-tuning
             config.update(read_json(args.config))
 
+        config.update(vars(args))
         # parse custom cli options into dictionary
         modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
         return cls(config, resume, modification)

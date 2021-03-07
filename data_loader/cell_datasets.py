@@ -16,47 +16,63 @@ class CellDataset(Dataset):
         self.split = split
         self.train = train
 
-        ann_file = os.path.join(data_dir, "annotations_trainval2017/annotations/instances_{}.json".format(split))
-        self.coco = COCO(ann_file)
-        self.ids = [str(k) for k in self.coco.imgs]
+        if self.train:
+            # train mode
+            ann_file = os.path.join(data_dir, "annotations_trainval2017/annotations/instances_{}.json".format(split))
+            self.coco = COCO(ann_file)
+            self.ids = [str(k) for k in self.coco.imgs]
 
-        self._classes = {k: v["name"] for k, v in self.coco.cats.items()}
-        self.classes = tuple(self.coco.cats[k]["name"] for k in sorted(self.coco.cats))
-        # results's labels convert to annotation labels
-        self.ann_labels = {self.classes.index(v): k for k, v in self._classes.items()}
+            self._classes = {k: v["name"] for k, v in self.coco.cats.items()}
+            self.classes = tuple(self.coco.cats[k]["name"] for k in sorted(self.coco.cats))
+            # results's labels convert to annotation labels
+            self.ann_labels = {self.classes.index(v): k for k, v in self._classes.items()}
 
-        checked_id_file = os.path.join(data_dir, "check_{}.txt".format(split))
-        if train:
-            if not os.path.exists(checked_id_file):
-                self._aspect_ratios = [v["width"] / v["height"] for v in self.coco.imgs.values()]
-            # self.check_dataset(checked_id_file)
+            checked_id_file = os.path.join(data_dir, "check_{}.txt".format(split))
+            if train:
+                if not os.path.exists(checked_id_file):
+                    self._aspect_ratios = [v["width"] / v["height"] for v in self.coco.imgs.values()]
+        else:
+            # inference mode
+            self.imgs_list = [f for f in os.listdir(self.data_dir) if f.endswith(('png', 'tif', 'jpg'))]
+            self.ids = range(len(self.imgs_list))
+            if not self.imgs_list:
+                raise FileNotFoundError
 
     def __getitem__(self, i):
         img_id = self.ids[i]
-        while True:
-            # image
+        if self.train:
+            while True:
+                # image
+                image = self.get_image(img_id)
+                # label
+                target = self.get_target(img_id) if self.train else {}
+                # check data
+                if target is None:
+                    img_id = np.random.choice(self.ids)
+                    continue
+                else:
+                    # data augment
+                    image, target = self.transform(image, target)
+                    # to tensor
+                    image = torch.from_numpy(image)
+                    target = torch.from_numpy(target)
+                    return image, target
+        else:
             image = self.get_image(img_id)
-            # label
-            target = self.get_target(img_id) if self.train else {}
-            # check data
-            if target is None:
-                img_id = np.random.choice(self.ids)
-                continue
-            else:
-                # data augment
-                image, target = self.transform(image, target)
-                # to tensor
-                image = torch.from_numpy(image)
-                target = torch.from_numpy(target)
-                return image, target
+            image, pre_info = self.transform(image)
+            return image, pre_info
 
     def __len__(self):
         return len(self.ids)
 
     def get_image(self, img_id):
         img_id = int(img_id)
-        img_info = self.coco.imgs[img_id]
-        image = Image.open(os.path.join(self.data_dir, "{}".format(self.split), img_info["file_name"]))
+        if self.train:
+            img_info = self.coco.imgs[img_id]
+            img_path = os.path.join(self.data_dir, "{}".format(self.split), img_info["file_name"])
+        else:
+            img_path = os.path.join(self.data_dir, self.imgs_list[img_id])
+        image = Image.open(img_path)
         image = np.array(image.convert('RGB'))
         return image
 
@@ -99,8 +115,13 @@ class CellDataset(Dataset):
         # step2: random rotate and resize
         if self.train and label is not None:
             img, label = transforms.random_rotate_and_resize(img, label[1:], scale_range=0.5)
-
-        return img, label
+            img, label = map(torch.from_numpy, [img, label])
+            return img, label
+        else:
+            # eval transform
+            img, *pre_info  = transforms.pad_image_ND(img)
+            img = torch.from_numpy(img)
+            return img, pre_info
 
 
     def mask_convert(self, masks):

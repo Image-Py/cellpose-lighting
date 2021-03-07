@@ -22,7 +22,7 @@ class BaseTrainer:
         self.save_period = cfg_trainer['save_period']
         self.monitor = cfg_trainer.get('monitor', 'off')
 
-        # configuration to monitor model performance and save best
+        # configuration to monitor models performance and save best
         if self.monitor == 'off':
             self.mnt_mode = 'off'
             self.mnt_best = 0
@@ -43,7 +43,7 @@ class BaseTrainer:
         self.writer = TensorboardWriter(config.log_dir, self.logger, cfg_trainer['tensorboard'])
 
         if config.resume is not None:
-            self._resume_checkpoint(config.resume)
+            self._resume_state_dict(config.resume)
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -70,11 +70,11 @@ class BaseTrainer:
             for key, value in log.items():
                 self.logger.info('    {:15s}: {}'.format(str(key), value))
 
-            # evaluate model performance according to configured metric, save best checkpoint as model_best
+            # evaluate models performance according to configured metric, save best checkpoint as model_best
             best = False
             if self.mnt_mode != 'off':
                 try:
-                    # check whether model performance improved or not, according to specified metric(mnt_metric)
+                    # check whether models performance improved or not, according to specified metric(mnt_metric)
                     improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
                                (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
                 except KeyError:
@@ -147,5 +147,18 @@ class BaseTrainer:
                                 "Optimizer parameters not being resumed.")
         else:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
+
+        self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))
+
+    def _resume_state_dict(self, resume_path):
+        """
+        Resume from saved checkpoints
+
+        :param resume_path: Checkpoint path to be resumed
+        """
+        resume_path = str(resume_path)
+        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
+        state_dict = torch.load(resume_path)
+        self.model.load_state_dict(state_dict)
 
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

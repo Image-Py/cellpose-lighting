@@ -16,7 +16,7 @@
     "data_loader": {
         "type": "CellDataLoader",
         "args":{
-            "data_dir": "/home/lizhogn/Documents/Data/coco/",
+            "data_dir": "data/",
             "batch_size": 1,
             "shuffle": true,
             "validation_split": 0.1,

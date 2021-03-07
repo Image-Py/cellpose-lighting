@@ -179,7 +179,7 @@ class CellPosenet(BaseModel):
     """
 
     def __init__(self, nbase, nout, sz, residual_on=True, 
-                 style_on=True, concatenation=False):
+                 style_on=True, concatenation=False, resume=None):
         super(CellPosenet, self).__init__()
         self.nbase = nbase
         self.nout = nout
@@ -187,6 +187,9 @@ class CellPosenet(BaseModel):
         self.residual_on = residual_on
         self.style_on = style_on
         self.concatenation = concatenation
+        self.resume = resume
+
+        # layers definite
         self.downsample = downsample(nbase, sz, residual_on=residual_on)
         nbaseup = nbase[1:]
         nbaseup.append(nbaseup[-1])
@@ -194,7 +197,7 @@ class CellPosenet(BaseModel):
         self.make_style = make_style()
         self.output = batchconv(nbaseup[0], nout, 1)
         self.style_on = style_on
-        
+
     def forward(self, data):
         T0    = self.downsample(data)
         style = self.make_style(T0[-1])
@@ -218,6 +221,6 @@ class CellPosenet(BaseModel):
                           self.sz,
                           self.residual_on,
                           self.style_on,
-                          self.concatenation,
-                          self.mkldnn)
+                          self.concatenation)
             self.load_state_dict(torch.load(filename, map_location=torch.device('cpu')))
+
