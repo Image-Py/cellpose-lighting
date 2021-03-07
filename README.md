@@ -96,8 +96,12 @@ Easy to train and inference for coco data format with terminal mode.
   ```
 
 ## Usage
-The code in this repo is an MNIST example of the template.
-Try `python train.py -c config.json` to run code.
+### Demo
+Download the `cytotorch` static_dict file and put it with the copied `config.json` file in the 
+same folder.
+```bash
+python eval_demo.py --config config.json --img path/to/img_dir(or file) --resume path/to/model_dir
+```
 
 ### Config file format
 Config files are in `.json` format:
