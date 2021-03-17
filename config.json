@@ -15,8 +15,8 @@
     },
     "data_loader": {
         "type": "CellDataLoader",
-        "args":{
-            "data_dir": "data/",
+        "args": {
+            "data_dir": "data/cell_1/",
             "batch_size": 1,
             "shuffle": true,
             "validation_split": 0.1,
@@ -43,7 +43,7 @@
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 24,
 
         "save_dir": "saved/",
         "save_period": 1,

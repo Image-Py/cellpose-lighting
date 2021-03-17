@@ -1,7 +1,7 @@
 # demo for evaluator
 import argparse
 import os
-from utils import transforms
+from utils import transforms, render
 import numpy as np
 from PIL import Image
 from scipy import ndimage as ndimg
@@ -68,20 +68,20 @@ def inference_single(img_path, model, device):
     # remove padding
     output = output[slc]
     # transpose so the channel is last axis
-    output = np.transpose(output[:2, ...], (1, 2, 0))
+    output = np.transpose(output, (1, 2, 0))
     # flow to mask
-    hist, lut, mask = flow2msk(output, None)
-    plt.imshow(mask)
-    plt.show()
+    lab = flow2msk(output)
+    render.show(image, output, lab)
 
     # 3.5 save the results
     pass
 
-def flow2msk(flow, prob, grad=1.0, area=150, volume=500):
-    # see the principle in https://qixinbo.info/2021/03/03/cellpose-3/#more
-    shp, dim = flow.shape[:-1], flow.ndim - 1
-    l = np.linalg.norm(flow, axis=-1)
-    flow /= l.reshape(shp+(1,));flow[l<grad] = 0
+def flow2msk(flowp, level=0.5, grad=0.5, area=None, volume=None):
+    flowp = np.asarray(flowp)
+    shp, dim = flowp.shape[:-1], flowp.ndim - 1
+    l = np.linalg.norm(flowp[:,:,:2], axis=-1)
+    flow = flowp[:,:,:2]/l.reshape(shp+(1,))
+    flow[(flowp[:,:,2]<level)|(l<grad)] = 0
     ss = ((slice(None),) * (dim) + ([0,-1],)) * 2
     for i in range(dim):flow[ss[dim-i:-i-2]+(i,)]=0
     sn = np.sign(flow); sn *= 0.5; flow += sn;
@@ -95,20 +95,34 @@ def flow2msk(flow, prob, grad=1.0, area=150, volume=500):
     lab, n = ndimg.label(hist, np.ones((3,)*dim))
     volumes = ndimg.sum(hist, lab, np.arange(n+1))
     areas = np.bincount(lab.ravel())
+    mean, std = estimate_volumes(volumes, 2)
+    if not volume: volume = max(mean-std*3, 50)
+    if not area: area = volumes // 3
     msk = (areas<area) & (volumes>volume)
     lut = np.zeros(n+1, np.uint32)
     lut[msk] = np.arange(1, msk.sum()+1)
-    mask = lut[lab].ravel()[rst].reshape(shp)
+    return lut[lab].ravel()[rst].reshape(shp)
     return hist, lut[lab], mask
+
+def estimate_volumes(arr, sigma=3):
+    msk = arr > 50
+    idx = np.arange(len(arr), dtype=np.uint32)
+    idx, arr = idx[msk], arr[msk]
+    for k in np.linspace(5, sigma, 5):
+       std = arr.std()
+       dif = np.abs(arr - arr.mean())
+       msk = dif < std * k
+       idx, arr = idx[msk], arr[msk]
+    return arr.mean(), arr.std()
 
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default=None, type=str,
+    args.add_argument('-c', '--config', default='config.json', type=str,
                       help='config file path (default: None)')
-    args.add_argument('-i', '--img', default=None, type=str,
+    args.add_argument('-i', '--img', default='data/test1.png', type=str,
                       help='image path or image dir')
-    args.add_argument('-r', '--resume', default=None, type=str,
+    args.add_argument('-r', '--resume', default='saved/models/CellposeNet/cytotorch_0', type=str,
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')

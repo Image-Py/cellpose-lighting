@@ -5,21 +5,29 @@ import torch
 from torch.utils.data import Dataset
 from utils import dynamics, plot, transforms
 import torchvision.transforms as T
+from pycocotools.coco import COCO
 
 
 class CellDataset(Dataset):
-    def __init__(self, data_dir, split, train=True):
+    def __init__(self, data_dir, train=True):
+        '''
+        cell dataset dictory structure
+        - {data_dir}/
+          - train/
+            - annotation.json
+            - images/
+          - val/
+            - annotation.json
+            - images/
+        '''
         super().__init__()
-        from pycocotools.coco import COCO
-
-        self.data_dir = data_dir
-        self.split = split
         self.train = train
 
         if self.train:
             # train mode
-            ann_file = os.path.join(data_dir, "annotations_trainval2017/annotations/instances_{}.json".format(split))
-            self.coco = COCO(ann_file)
+            self.anno_path = os.path.join(data_dir, 'train/annotation.json')
+            self.img_dir = os.path.join(data_dir, 'train/images')
+            self.coco = COCO(self.anno_path)
             self.ids = [str(k) for k in self.coco.imgs]
 
             self._classes = {k: v["name"] for k, v in self.coco.cats.items()}
@@ -27,12 +35,13 @@ class CellDataset(Dataset):
             # results's labels convert to annotation labels
             self.ann_labels = {self.classes.index(v): k for k, v in self._classes.items()}
 
-            checked_id_file = os.path.join(data_dir, "check_{}.txt".format(split))
-            if train:
-                if not os.path.exists(checked_id_file):
-                    self._aspect_ratios = [v["width"] / v["height"] for v in self.coco.imgs.values()]
+            checked_id_file = os.path.join(data_dir, "check_train.txt")
+            if not os.path.exists(checked_id_file):
+                self._aspect_ratios = [v["width"] / v["height"] for v in self.coco.imgs.values()]
         else:
             # inference mode
+            self.anno_path = os.path.join(data_dir, 'val/annotation.json')
+            self.img_dir = os.path.join(data_dir, 'val/images')
             self.imgs_list = [f for f in os.listdir(self.data_dir) if f.endswith(('png', 'tif', 'jpg'))]
             self.ids = range(len(self.imgs_list))
             if not self.imgs_list:
@@ -53,9 +62,6 @@ class CellDataset(Dataset):
                 else:
                     # data augment
                     image, target = self.transform(image, target)
-                    # to tensor
-                    image = torch.from_numpy(image)
-                    target = torch.from_numpy(target)
                     return image, target
         else:
             image = self.get_image(img_id)
@@ -69,9 +75,9 @@ class CellDataset(Dataset):
         img_id = int(img_id)
         if self.train:
             img_info = self.coco.imgs[img_id]
-            img_path = os.path.join(self.data_dir, "{}".format(self.split), img_info["file_name"])
+            img_path = os.path.join(self.img_dir, img_info["file_name"])
         else:
-            img_path = os.path.join(self.data_dir, self.imgs_list[img_id])
+            img_path = os.path.join(self.img_dir, self.imgs_list[img_id])
         image = Image.open(img_path)
         image = np.array(image.convert('RGB'))
         return image
@@ -139,12 +145,12 @@ class CellDataset(Dataset):
         return mask_c
 
 if __name__ == '__main__':
-    cocoDataset = CellDataset(data_dir='/home/lizhogn/Documents/Data/coco/',
-                              split='val2017', train=True)
+    cocoDataset = CellDataset(data_dir='data/cell_1/',
+                              train=True)
     image, target = cocoDataset[0]
     import matplotlib.pyplot as plt
-    flow1 = target['flows'].numpy()
-    flow2 = plot.dx_to_circ([flow1[2], flow1[3]])
+    flow1 = target.numpy()
+    flow2 = plot.dx_to_circ([flow1[1], flow1[2]])
     plt.imshow(flow2)
     plt.show()
 

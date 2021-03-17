@@ -10,7 +10,6 @@ from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
 
-
 # fix random seeds for reproducibility
 SEED = 123
 torch.manual_seed(SEED)
@@ -29,6 +28,10 @@ def main(config):
     model = config.init_obj('arch', module_arch)
     logger.info(model)
 
+    # model load state dict
+    state_dict = torch.load(config.resume)
+    model.load_state_dict(state_dict)
+
     # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(config['n_gpu'])
     model = model.to(device)
@@ -40,6 +43,11 @@ def main(config):
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
+    # freeze some layers for transfer learning
+    for name, param in model.named_parameters():
+        if not ('output' in name):
+            param.requires_grad = False
+    # add the requires_grad parameter to optimizer
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
@@ -48,7 +56,7 @@ def main(config):
                       config=config,
                       device=device,
                       data_loader=data_loader,
-                      valid_data_loader=valid_data_loader,
+                      valid_data_loader=None,
                       lr_scheduler=lr_scheduler)
 
     trainer.train()

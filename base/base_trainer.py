@@ -96,7 +96,16 @@ class BaseTrainer:
                     break
 
             if epoch % self.save_period == 0:
-                self._save_checkpoint(epoch, save_best=best)
+                # self._save_checkpoint(epoch, save_best=best)
+                self._save_state_dict(epoch, save_base=best)
+
+    def _save_state_dict(self, epoch, save_base=False):
+        """
+        Saving model static_dict
+        """
+        filename = str(self.checkpoint_dir / 'state_dict-epoch{}'.format(epoch))
+        torch.save(self.model.state_dict(), filename)
+        self.logger.info("Saving state_dict: {} ...".format(filename))
 
     def _save_checkpoint(self, epoch, save_best=False):
         """

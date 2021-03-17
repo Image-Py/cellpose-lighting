@@ -1,12 +1,13 @@
-# Cellpose lightning
-Cellpose lightning version.
+# Cellpose lighting 
+Cellpose lighting version for transferlearning at own datasets
+
 Easy to train and inference for coco data format with terminal mode.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
 
-- [Cellpose lightning](#cellpose-lightning)
+- [Cellpose lighting](#cellpose-lightning)
   - [Requirements](#requirements)
   - [Features](#features)
   - [Folder Structure](#folder-structure)
