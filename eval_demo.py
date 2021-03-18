@@ -69,6 +69,7 @@ def inference_single(img_path, model, device):
     output = output[slc]
     # transpose so the channel is last axis
     output = np.transpose(output, (1, 2, 0))
+
     # flow to mask
     lab = flow2msk(output)
     render.show(image, output, lab)
@@ -104,6 +105,7 @@ def flow2msk(flowp, level=0.5, grad=0.5, area=None, volume=None):
     return lut[lab].ravel()[rst].reshape(shp)
     return hist, lut[lab], mask
 
+
 def estimate_volumes(arr, sigma=3):
     msk = arr > 50
     idx = np.arange(len(arr), dtype=np.uint32)
@@ -122,7 +124,7 @@ if __name__ == '__main__':
                       help='config file path (default: None)')
     args.add_argument('-i', '--img', default='data/test1.png', type=str,
                       help='image path or image dir')
-    args.add_argument('-r', '--resume', default='saved/models/CellposeNet/cytotorch_0', type=str,
+    args.add_argument('-r', '--resume', default='saved/models/CellposeNet/cytotorch', type=str,
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')

@@ -44,9 +44,11 @@ def main(config):
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     # freeze some layers for transfer learning
-    for name, param in model.named_parameters():
-        if not ('output' in name):
-            param.requires_grad = False
+
+    # for name, param in model.named_parameters():
+    #     if not ('output' in name):
+    #         param.requires_grad = False
+
     # add the requires_grad parameter to optimizer
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = config.init_obj('optimizer', torch.optim, trainable_params)

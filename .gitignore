@@ -105,6 +105,7 @@ data/
 input/
 saved/
 datasets/
+base_weight/
 
 # editor, os cache directory
 .vscode/

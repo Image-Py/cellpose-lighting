@@ -44,7 +44,20 @@ class Trainer(BaseTrainer):
 
             self.optimizer.zero_grad()
             output, style = self.model(data)
-            loss = self.criterion(output, target)
+
+            # # trainging debug
+            import matplotlib.pyplot as plt
+            debug_output = output.detach().cpu().numpy()
+            debug_target = target.detach().cpu().numpy()
+            plt.subplot(231).imshow(debug_target[0, 0, :, :])
+            plt.subplot(232).imshow(debug_target[0, 1, :, :])
+            plt.subplot(233).imshow(debug_target[0, 2, :, :])
+            plt.subplot(234).imshow(debug_output[0, 0, :, :])
+            plt.subplot(235).imshow(debug_output[0, 1, :, :])
+            plt.subplot(236).imshow(debug_output[0, 2, :, :])
+            plt.show()
+
+            loss = self.criterion(target, output)
             loss.backward()
             self.optimizer.step()
 

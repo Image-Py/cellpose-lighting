@@ -72,7 +72,7 @@ def labels_to_flows(labels, files=None):
     --------------
 
     flows: list of [4 x Ly x Lx] arrays
-        flows[k][0] is labels[k], flows[k][1] is cell probability, flows[k][2] is Y flow, and flows[k][3] is X flow
+        flows[k][0] is labels[k], flows[k][1] is Y flow, and flows[k][2] is X flow, flows[k][3] is cell probability
 
     """
 
@@ -85,7 +85,7 @@ def labels_to_flows(labels, files=None):
         # compute flows        
         veci = [masks_to_flows(labels[n][0])[0] for n in range(nimg)]
         # concatenate flows with cell probability
-        flows = [np.concatenate((labels[n][[0]], labels[n][[0]]>0.5, veci[n]), axis=0).astype(np.float32)
+        flows = [np.concatenate((labels[n][[0]], veci[n], labels[n][[0]]>0.5), axis=0).astype(np.float32)
                     for n in range(nimg)]
         if files is not None:
             for flow, file in zip(flows, files):

@@ -515,10 +515,10 @@ def random_rotate_and_resize(X, Y=None, scale_range=1., xy = (224,224),
                 lbl[k] = cv2.warpAffine(labels[k], M, (xy[1],xy[0]), flags=cv2.INTER_LINEAR)
 
         if nt > 1 and not unet:
-            v1 = lbl[2].copy()
-            v2 = lbl[1].copy()
-            lbl[1] = (-v1 * np.sin(-theta) + v2*np.cos(-theta))
-            lbl[2] = (v1 * np.cos(-theta) + v2*np.sin(-theta))
+            v1 = lbl[1].copy()
+            v2 = lbl[0].copy()
+            lbl[0] = (-v1 * np.sin(-theta) + v2*np.cos(-theta))
+            lbl[1] = (v1 * np.cos(-theta) + v2*np.sin(-theta))
 
     return imgi, lbl
 
